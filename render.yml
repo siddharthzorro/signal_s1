@@ -1,0 +1,13 @@
+services:
+  - type: cron
+    name: btc-signal-bot
+    schedule: "0 * * * *"  # Every hour
+    runtime: python
+    repo: https://github.com/YOUR_USERNAME/btc-signal-bot
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python main.py"
+    envVars:
+      - key: 8161960481:AAGnBkojjGDKqU1Qz-UxL6u4VGCoTUWXKFo
+        sync: false
+      - key: 5340848858
+        sync: false
