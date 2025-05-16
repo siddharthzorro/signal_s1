@@ -19,14 +19,26 @@ def send_telegram(message):
 
 def get_binance_ohlcv(symbol, interval='4h', limit=200):
     url = f'https://api.binance.com/api/v3/klines?symbol={symbol}&interval={interval}&limit={limit}'
-    response = requests.get(url)
-    data = response.json()
-    df = pd.DataFrame(data, columns=[
-        'time', 'open', 'high', 'low', 'close', 'volume',
-        'close_time', 'qav', 'trades', 'taker_base_vol', 'taker_quote_vol', 'ignore'
-    ])
-    df['close'] = df['close'].astype(float)
-    return df
+    print(f"[DEBUG] Requesting URL: {url}")  # 👈 Logs the URL
+    try:
+        response = requests.get(url, timeout=10)
+        print(f"[DEBUG] Status Code: {response.status_code}")  # 👈 Logs status
+        print(f"[DEBUG] Response: {response.text[:500]}")  # 👈 Logs partial body
+        response.raise_for_status()
+        data = response.json()
+        if not data:
+            print(f"[WARNING] Empty data received for {symbol}")
+            return pd.DataFrame()
+        df = pd.DataFrame(data, columns=[
+            'time', 'open', 'high', 'low', 'close', 'volume',
+            'close_time', 'qav', 'trades', 'taker_base_vol', 'taker_quote_vol', 'ignore'
+        ])
+        df['close'] = df['close'].astype(float)
+        return df
+    except Exception as e:
+        print(f"[ERROR] Error fetching data for {symbol}: {e}")
+        return pd.DataFrame()
+
 
 def check_signal(symbol):
     df = get_binance_ohlcv(symbol)
