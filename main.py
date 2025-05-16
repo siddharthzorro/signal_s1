@@ -30,6 +30,9 @@ def get_binance_ohlcv(symbol, interval='4h', limit=200):
 
 def check_signal(symbol):
     df = get_binance_ohlcv(symbol)
+    if df.empty or len(df) < 200:
+        send_telegram(f"⚠️ Not enough data for {symbol}")
+        return
     df['ema50'] = ta.trend.ema_indicator(df['close'], window=50)
     df['ema200'] = ta.trend.ema_indicator(df['close'], window=200)
     macd_line = ta.trend.macd(df['close'], window_slow=26, window_fast=12)
