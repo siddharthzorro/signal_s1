@@ -7,7 +7,7 @@ services:
     buildCommand: "pip install -r requirements.txt"
     startCommand: "python main.py"
     envVars:
-      - key: 8161960481:AAGnBkojjGDKqU1Qz-UxL6u4VGCoTUWXKFo
+      - key: BOT_TOKEN
         sync: false
-      - key: 5340848858
+      - key: CHAT_ID
         sync: false
