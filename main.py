@@ -8,7 +8,6 @@ BOT_TOKEN = '8161960481:AAGnBkojjGDKqU1Qz-UxL6u4VGCoTUWXKFo'
 CHAT_ID = '5340848858'
 
 # In-memory position tracking (reset each time script runs)
-positions = {}
 
 def send_telegram(message):
     url = f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage'
@@ -36,7 +35,6 @@ def check_signal(symbol):
     macd_line = ta.trend.macd(df['close'], window_slow=26, window_fast=12)
     macd_signal = ta.trend.macd_signal(df['close'], window_slow=26, window_fast=12, window_sign=9)
     rsi = ta.momentum.rsi(df['close'], window=14)
-
     df['macd'] = macd_line
     df['macd_signal'] = macd_signal
     df['rsi'] = rsi
@@ -51,24 +49,24 @@ def check_signal(symbol):
     macd_cross_up   = prev['macd'] < prev['macd_signal'] and last['macd'] > last['macd_signal']
 
     symbol_readable = symbol.replace('USDT', '')
-    position = positions.get(symbol, "none")
-
-    # === Entry logic ===
-    if position == "none":
-        if long_entry:
-            send_telegram(f"📈 LONG Entry - {symbol_readable}\nPrice: {last['close']:.2f}\nTime: {datetime.utcnow()} UTC")
-            positions[symbol] = "long"
-        elif short_entry:
-            send_telegram(f"📉 SHORT Entry - {symbol_readable}\nPrice: {last['close']:.2f}\nTime: {datetime.utcnow()} UTC")
-            positions[symbol] = "short"
+    # === Entry logic === 
+    if long_entry:
+        send_telegram(f"📈 LONG Entry - {symbol_readable}\nPrice: {last['close']:.2f}\nTime: {datetime.utcnow()} UTC")
+        positions[symbol] = "long"
+    elif short_entry:
+        send_telegram(f"📉 SHORT Entry - {symbol_readable}\nPrice: {last['close']:.2f}\nTime: {datetime.utcnow()} UTC")
+        positions[symbol] = "short"
 
     # === Exit logic ===
-    elif position == "long" and macd_cross_down:
+    if macd_cross_down:
         send_telegram(f"❌ LONG Exit (MACD Cross Down) - {symbol_readable}\nPrice: {last['close']:.2f}\nTime: {datetime.utcnow()} UTC")
         positions[symbol] = "none"
-    elif position == "short" and macd_cross_up:
+    elif macd_cross_up:
         send_telegram(f"❌ SHORT Exit (MACD Cross Up) - {symbol_readable}\nPrice: {last['close']:.2f}\nTime: {datetime.utcnow()} UTC")
         positions[symbol] = "none"
+    else:
+        send_telegram(f"No trade")
+
 
 if __name__ == "__main__":
     for symbol in ["BTCUSDT", "ETHUSDT"]:
