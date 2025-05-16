@@ -4,8 +4,8 @@ import pandas as pd
 import ta
 from datetime import datetime
 
-BOT_TOKEN = os.getenv('BOT_TOKEN')
-CHAT_ID = os.getenv('CHAT_ID')
+BOT_TOKEN = '8161960481:AAGnBkojjGDKqU1Qz-UxL6u4VGCoTUWXKFo'
+CHAT_ID = '5340848858'
 
 # In-memory position tracking (reset each time script runs)
 positions = {}
