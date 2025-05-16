@@ -7,6 +7,9 @@ from datetime import datetime
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 CHAT_ID = os.getenv('CHAT_ID')
 
+# In-memory position tracking (reset each time script runs)
+positions = {}
+
 def send_telegram(message):
     url = f'https://api.telegram.org/bot{BOT_TOKEN}/sendMessage'
     payload = {'chat_id': CHAT_ID, 'text': message}
@@ -44,11 +47,28 @@ def check_signal(symbol):
     long_entry = last['ema50'] > last['ema200'] and last['macd'] > last['macd_signal'] and last['rsi'] > prev['rsi'] and last['rsi'] < 80
     short_entry = last['ema50'] < last['ema200'] and last['macd'] < last['macd_signal'] and last['rsi'] < prev['rsi'] and last['rsi'] > 20
 
+    macd_cross_down = prev['macd'] > prev['macd_signal'] and last['macd'] < last['macd_signal']
+    macd_cross_up   = prev['macd'] < prev['macd_signal'] and last['macd'] > last['macd_signal']
+
     symbol_readable = symbol.replace('USDT', '')
-    if long_entry:
-        send_telegram(f"📈 LONG Signal - {symbol_readable}\nPrice: {last['close']:.2f}\nTime: {datetime.utcnow()} UTC")
-    elif short_entry:
-        send_telegram(f"📉 SHORT Signal - {symbol_readable}\nPrice: {last['close']:.2f}\nTime: {datetime.utcnow()} UTC")
+    position = positions.get(symbol, "none")
+
+    # === Entry logic ===
+    if position == "none":
+        if long_entry:
+            send_telegram(f"📈 LONG Entry - {symbol_readable}\nPrice: {last['close']:.2f}\nTime: {datetime.utcnow()} UTC")
+            positions[symbol] = "long"
+        elif short_entry:
+            send_telegram(f"📉 SHORT Entry - {symbol_readable}\nPrice: {last['close']:.2f}\nTime: {datetime.utcnow()} UTC")
+            positions[symbol] = "short"
+
+    # === Exit logic ===
+    elif position == "long" and macd_cross_down:
+        send_telegram(f"❌ LONG Exit (MACD Cross Down) - {symbol_readable}\nPrice: {last['close']:.2f}\nTime: {datetime.utcnow()} UTC")
+        positions[symbol] = "none"
+    elif position == "short" and macd_cross_up:
+        send_telegram(f"❌ SHORT Exit (MACD Cross Up) - {symbol_readable}\nPrice: {last['close']:.2f}\nTime: {datetime.utcnow()} UTC")
+        positions[symbol] = "none"
 
 if __name__ == "__main__":
     for symbol in ["BTCUSDT", "ETHUSDT"]:
